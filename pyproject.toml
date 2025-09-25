@@ -26,7 +26,7 @@ classifiers = [
 ]
 dependencies = [
     "bitmath",
-    "iso-639"
+    "iso639-lang"
 ]
 dynamic = ["version"]
 
@@ -88,4 +88,7 @@ exclude_lines = [
   "if __name__ == '__main__':",
   "if TYPE_CHECKING:",
   "if SAVE_OUTPUTS:",
+]
+exclude_also = [
+    "def __repr__",
 ]

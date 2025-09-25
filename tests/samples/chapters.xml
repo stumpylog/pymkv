@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<Chapters>
+  <EditionEntry>
+    <ChapterAtom>
+      <ChapterTimeStart>00:00:00.000</ChapterTimeStart>
+      <ChapterDisplay>
+        <ChapterString>Intro</ChapterString>
+        <ChapterLanguage>eng</ChapterLanguage>
+      </ChapterDisplay>
+    </ChapterAtom>
+    <ChapterAtom>
+      <ChapterTimeStart>00:00:02.000</ChapterTimeStart>
+      <ChapterDisplay>
+        <ChapterString>Main Part</ChapterString>
+        <ChapterLanguage>eng</ChapterLanguage>
+      </ChapterDisplay>
+    </ChapterAtom>
+  </EditionEntry>
+</Chapters>

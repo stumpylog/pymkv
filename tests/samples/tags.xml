@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<Tags>
+  <Tag>
+    <Targets>
+      <TargetTypeValue>50</TargetTypeValue>
+    </Targets>
+    <Simple>
+      <Name>TITLE</Name>
+      <String>Test MKV With Tags</String>
+    </Simple>
+  </Tag>
+</Tags>

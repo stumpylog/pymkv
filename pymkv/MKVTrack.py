@@ -188,7 +188,7 @@ class MKVTrack:
 
     @language.setter
     def language(self, language):
-        if language is None or is_ISO639_2(language):
+        if language is None or language.lower() == "und" or is_ISO639_2(language):
             self._language = language
         else:
             raise ValueError('not an ISO639-2 language code')

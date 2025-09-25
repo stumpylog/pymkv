@@ -3,11 +3,7 @@
 
 """ISO639-2 Three Character Language Codes"""
 
-from iso639 import languages
+from iso639 import is_language
 
 def is_ISO639_2(language):
-  try:
-    languages.get(part2b=language)
-    return True
-  except KeyError:
-    return False
+  return is_language(language, "pt2t")
