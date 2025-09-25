@@ -1,3 +1,0 @@
-# project dependencies
-bitmath
-iso-639
