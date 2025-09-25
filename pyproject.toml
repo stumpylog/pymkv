@@ -26,12 +26,69 @@ classifiers = [
 ]
 dependencies = [
     "bitmath",
-    "iso-639"
+    "iso639-lang"
 ]
 dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://github.com/sheldonkwoodward/pymkv"
 
+
 [tool.hatch.version]
 path = "pymkv/__about__.py"
+
+[tool.hatch.envs.default]
+installer = "uv"
+
+[tool.hatch.envs.hatch-test]
+# https://hatch.pypa.io/latest/config/internal/testing/
+parallel = false
+randomize = true
+extra-dependencies = [
+  "pytest-sugar",
+]
+
+extra-args = [ "--maxprocesses=8", "--pythonwarnings=all" ]
+
+[tool.hatch.envs.hatch-test.scripts]
+run = [
+  "python3 --version",
+  "pytest{env:HATCH_TEST_ARGS:} {args}",
+]
+
+run-cov = [
+  "python3 --version",
+  "coverage erase",
+  "coverage run -m pytest{env:HATCH_TEST_ARGS:} {args}",
+]
+cov-combine = [ "coverage combine" ]
+cov-report = [
+  "coverage report",
+  "coverage json",
+  "coverage html",
+]
+
+[tool.coverage.run]
+source_pkgs = [ "pymkv", "tests" ]
+branch = true
+parallel = true
+omit = [
+  "src/pymkv/__about__.py",
+  "tests/conftest.py",
+  "tests/utils.py",
+]
+
+[tool.coverage.paths]
+pymkv = [ "pymkv" ]
+tests = [ "tests" ]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == '__main__':",
+  "if TYPE_CHECKING:",
+  "if SAVE_OUTPUTS:",
+]
+exclude_also = [
+    "def __repr__",
+]

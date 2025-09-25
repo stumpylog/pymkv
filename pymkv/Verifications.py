@@ -44,7 +44,7 @@ def verify_matroska(file_path, mkvmerge_path='mkvmerge'):
     if not isfile(file_path):
         raise FileNotFoundError('"{}" does not exist'.format(file_path))
     try:
-        info_json = json.loads(sp.check_output([mkvmerge_path, '-J', expanduser(file_path)]).decode())
+        info_json = json.loads(sp.check_output([mkvmerge_path, '-J', file_path]).decode())
     except sp.CalledProcessError:
         raise ValueError('"{}" could not be opened'.format(file_path))
     return info_json['container']['type'] == 'Matroska'

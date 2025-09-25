@@ -101,7 +101,7 @@ class Timestamp:
         return self.ts
 
     def __getitem__(self, index):
-        return (self.hh, self.mm, self.ss, self.ss)[index]
+        return (self.hh, self.mm, self.ss, self.nn)[index]
 
     @property
     def ts(self):
