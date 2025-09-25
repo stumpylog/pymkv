@@ -7,7 +7,7 @@ from re import match
 
 
 class Timestamp:
-    def __init__(self, timestamp=None, hh=None, mm=None, ss=None, nn=None, form='MM:SS'):
+    def __init__(self, timestamp=None, hh=None, mm=None, ss=None, nn=None, form="MM:SS"):
         """A class that represents a timestamp used in MKVFiles.
 
         The Timestamp class represents a timestamp used in mkvmerge. These are commonly used for splitting MKVFiles.
@@ -107,19 +107,19 @@ class Timestamp:
     def ts(self):
         """Generates the timestamp specified in the object."""
         # parse timestamp format
-        format_groups = match('^(([Hh]{1,2}):)?([Mm]{1,2}):([Ss]{1,2})(\.([Nn]{1,9}))?$', self.form).groups()
+        format_groups = match(r"^(([Hh]{1,2}):)?([Mm]{1,2}):([Ss]{1,2})(\.([Nn]{1,9}))?$", self.form).groups()
         timestamp_format = [False if format_groups[i] is None else True for i in (1, 2, 3, 5)]
 
         # create timestamp string
-        timestamp_string = ''
+        timestamp_string = ""
         if timestamp_format[0] or self._hh:
-            timestamp_string += '{0:0=2d}:'.format(self.hh)
+            timestamp_string += f"{self.hh:0=2d}:"
         if timestamp_format[1] or self._mm:
-            timestamp_string += '{0:0=2d}:'.format(self.mm)
+            timestamp_string += f"{self.mm:0=2d}:"
         if timestamp_format[2] or self._ss:
-            timestamp_string += '{0:0=2d}'.format(self.ss)
+            timestamp_string += f"{self.ss:0=2d}"
         if timestamp_format[3] or self._nn:
-            timestamp_string += '{:.9f}'.format(self.nn / 1000000000).rstrip('0')[1:] if self.nn else '.0'
+            timestamp_string += f"{self.nn / 1000000000:.9f}".rstrip("0")[1:] if self.nn else ".0"
         return timestamp_string
 
     @ts.setter
@@ -131,7 +131,7 @@ class Timestamp:
             the basis of the timestamp.
         """
         if not isinstance(timestamp, (int, str)):
-            raise TypeError('"{}" is not str or int type'.format(type(timestamp)))
+            raise TypeError(f'"{type(timestamp)}" is not str or int type')
         else:
             self._hh = None
             self._mm = None
@@ -187,8 +187,8 @@ class Timestamp:
             The timestamp to be verified.
         """
         if not isinstance(timestamp, str):
-            raise TypeError('"{}" is not str type'.format(type(timestamp)))
-        elif match('^[0-9]{1,2}(:[0-9]{1,2}){1,2}(\.[0-9]{1,9})?$', timestamp):
+            raise TypeError(f'"{type(timestamp)}" is not str type')
+        elif match(r"^[0-9]{1,2}(:[0-9]{1,2}){1,2}(\.[0-9]{1,9})?$", timestamp):
             return True
         return False
 
@@ -200,12 +200,15 @@ class Timestamp:
             extracted from this parameter.
         """
         if not isinstance(timestamp, (str, int)):
-            raise TypeError('"{}" is not str or int type'.format(type(timestamp)))
+            raise TypeError(f'"{type(timestamp)}" is not str or int type')
         elif isinstance(timestamp, str) and not Timestamp.verify(timestamp):
-            raise ValueError('"{}" is not a valid timestamp'.format(timestamp))
+            raise ValueError(f'"{timestamp}" is not a valid timestamp')
         elif isinstance(timestamp, str):
             # parse timestamp
-            timestamp_groups = match('^(([0-9]{1,2}):)?([0-9]{1,2}):([0-9]{1,2})(\.([0-9]{1,9}))?$', timestamp).groups()
+            timestamp_groups = match(
+                r"^(([0-9]{1,2}):)?([0-9]{1,2}):([0-9]{1,2})(\.([0-9]{1,9}))?$",
+                timestamp,
+            ).groups()
             timestamp = [timestamp_groups[i] for i in (1, 2, 3, 4)]
             timestamp_clean = []
 

@@ -36,11 +36,12 @@ Now all these tracks can be added to an :class:`~pymkv.MKVFile` object and muxed
 """
 
 import json
-from os.path import expanduser, isfile
 import subprocess as sp
+from os.path import expanduser
+from os.path import isfile
 
-from pymkv.Verifications import verify_supported
 from pymkv.ISO639_2 import is_ISO639_2
+from pymkv.Verifications import verify_supported
 
 
 class MKVTrack:
@@ -104,7 +105,7 @@ class MKVTrack:
         self._track_type = None
 
         # base
-        self.mkvmerge_path = 'mkvmerge'
+        self.mkvmerge_path = "mkvmerge"
         self._file_path = None
         self.file_path = file_path
         self._track_id = None
@@ -165,12 +166,12 @@ class MKVTrack:
 
     @track_id.setter
     def track_id(self, track_id):
-        info_json = json.loads(sp.check_output([self.mkvmerge_path, '-J', self.file_path]).decode())
-        if not 0 <= track_id < len(info_json['tracks']):
-            raise IndexError('track index out of range')
+        info_json = json.loads(sp.check_output([self.mkvmerge_path, "-J", self.file_path]).decode())
+        if not 0 <= track_id < len(info_json["tracks"]):
+            raise IndexError("track index out of range")
         self._track_id = track_id
-        self._track_codec = info_json['tracks'][track_id]['codec']
-        self._track_type = info_json['tracks'][track_id]['type']
+        self._track_codec = info_json["tracks"][track_id]["codec"]
+        self._track_type = info_json["tracks"][track_id]["type"]
 
     @property
     def language(self):
@@ -191,7 +192,7 @@ class MKVTrack:
         if language is None or language.lower() == "und" or is_ISO639_2(language):
             self._language = language
         else:
-            raise ValueError('not an ISO639-2 language code')
+            raise ValueError("not an ISO639-2 language code")
 
     @property
     def tags(self):
@@ -211,10 +212,10 @@ class MKVTrack:
     @tags.setter
     def tags(self, file_path):
         if not isinstance(file_path, str):
-            raise TypeError('"{}" is not of type str'.format(file_path))
+            raise TypeError(f'"{file_path}" is not of type str')
         file_path = expanduser(file_path)
         if not isfile(file_path):
-            raise FileNotFoundError('"{}" does not exist'.format(file_path))
+            raise FileNotFoundError(f'"{file_path}" does not exist')
         self._tags = file_path
 
     @property

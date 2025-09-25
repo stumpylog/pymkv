@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - This changelog
 - Basic testing covering all the classes
+- pre-commit configuration and EditorConfig to standardize more items
 
 ### Changed
 
 - Updates packaging to use pyproject.toml and hatch/hatchling
+- Formatting and linting is now done with Ruff
