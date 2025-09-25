@@ -1,38 +1,42 @@
 [build-system]
-requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+requires = [ "hatchling" ]
 
 [project]
 name = "pymkv"
 description = "A Python wrapper for mkvmerge. It provides support for muxing, splitting, linking, chapters, tags, and attachments through the use of mkvmerge."
 readme = "README.md"
-requires-python = ">=3.6"
-license = {text = "MIT"}
+keywords = [ "wrapper" ]
+license = { text = "MIT" }
 authors = [
-    {name = "Sheldon Woodward", email = "me@sheldonw.com"},
-    {name = "Trenton H", email = "rda0128ou@mozmail.com"}
+  { name = "Sheldon Woodward", email = "me@sheldonw.com" },
+  { name = "Trenton H", email = "rda0128ou@mozmail.com" },
 ]
-keywords = ["wrapper"]
+requires-python = ">=3.9"
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Topic :: Multimedia :: Video :: Conversion",
-    "Topic :: Utilities",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Multimedia :: Video :: Conversion",
+  "Topic :: Utilities",
 ]
+dynamic = [ "version" ]
+
 dependencies = [
-    "bitmath",
-    "iso639-lang"
+  "bitmath",
+  "iso639-lang",
 ]
-dynamic = ["version"]
-
-[project.urls]
-Homepage = "https://github.com/sheldonkwoodward/pymkv"
-
+urls.Homepage = "https://github.com/sheldonkwoodward/pymkv"
 
 [tool.hatch.version]
 path = "pymkv/__about__.py"
@@ -68,6 +72,119 @@ cov-report = [
   "coverage html",
 ]
 
+[tool.hatch.envs.hatch-static-analysis]
+# https://hatch.pypa.io/latest/config/internal/static-analysis/
+dependencies = [ "ruff ~= 0.13" ]
+config-path = "none"
+
+#
+# Custom Environments
+#
+[tool.hatch.envs.typing]
+detached = true
+dependencies = [
+  "mypy ~= 1.18",
+]
+
+[tool.hatch.envs.typing.scripts]
+run = [
+  "mypy --version",
+  "mypy --install-types --non-interactive {args:src/simpleiso3166}",
+]
+
+[tool.hatch.envs.pre-commit]
+template = "pre-commit"
+detached = true
+dependencies = [
+  "pre-commit ~= 4.0",
+  "pre-commit-uv",
+]
+
+[tool.hatch.envs.pre-commit.scripts]
+check = [ "pre-commit run --all-files" ]
+update = [ "pre-commit autoupdate" ]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+
+fix = true
+output-format = "grouped"
+# https://docs.astral.sh/ruff/rules/
+lint.extend-select = [
+  "A",
+  "ARG",
+  "B",
+  "C",
+  "C4",
+  "COM",
+  "DTZ",
+  "E",
+  "EM",
+  "ERA",
+  "EXE",
+  "F",
+  "FBT",
+  "FLY",
+  "I",
+  "ICN",
+  "INP",
+  "INT",
+  "ISC",
+  "N",
+  "PERF",
+  "PGH",
+  "PIE",
+  "PL",
+  "PLC",
+  "PLE",
+  "PLR",
+  "PLW",
+  "PT",
+  "PTH",
+  "Q",
+  "RSE",
+  "RUF",
+  "S",
+  "SIM",
+  "SLF",
+  "T",
+  "T10",
+  "T20",
+  "TCH",
+  "TD",
+  "TID",
+  "TRY",
+  "UP",
+  "W",
+  "YTT",
+]
+lint.ignore = [
+  # Allow non-abstract empty methods in abstract base classes
+  "B027",
+  # Ignore complexity
+  "C901",
+  # Allow boolean positional values in function calls, like `dict.get(... True)`
+  "FBT003",
+  "PLR0911",
+  "PLR0912",
+  "PLR0913",
+  "PLR0915",
+  # Ignore checks for possible passwords
+  "S105",
+  "S106",
+  "S107",
+  # Ignore no author and missing issue link in TODO tags
+  "TD002",
+  "TD003",
+]
+lint.flake8-tidy-imports.ban-relative-imports = "all"
+lint.isort.force-single-line = true
+lint.isort.known-first-party = [ "pymkv" ]
+
+[tool.pyproject-fmt]
+max_supported_python = "3.13"
+
 [tool.coverage.run]
 source_pkgs = [ "pymkv", "tests" ]
 branch = true
@@ -90,5 +207,5 @@ exclude_lines = [
   "if SAVE_OUTPUTS:",
 ]
 exclude_also = [
-    "def __repr__",
+  "def __repr__",
 ]
