@@ -1,5 +1,7 @@
-import pytest
 from pathlib import Path
+
+import pytest
+
 from pymkv.MKVAttachment import MKVAttachment
 
 
@@ -33,7 +35,7 @@ class TestMKVAttachment:
             str(dummy_attachment_file),
             name="Test Attachment",
             description="A test file.",
-            attach_once=True
+            attach_once=True,
         )
         assert attachment.name == "Test Attachment"
         assert attachment.description == "A test file."

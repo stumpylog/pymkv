@@ -1,10 +1,9 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
+title: ""
 labels: bug
-assignees: ''
-
+assignees: ""
 ---
 
 **Describe the bug**
@@ -20,8 +19,9 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Software (please complete the following information):**
- - OS: [e.g. macOS 10.14]
- - MKVToolNix version [e.g. v44.0.0]
+
+- OS: [e.g. macOS 10.14]
+- MKVToolNix version [e.g. v44.0.0]
 
 **Additional context**
 Add any other context about the problem here.

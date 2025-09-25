@@ -108,6 +108,7 @@ update = [ "pre-commit autoupdate" ]
 target-version = "py39"
 line-length = 120
 
+exclude = [ "docs/source/conf.py" ]
 fix = true
 output-format = "grouped"
 # https://docs.astral.sh/ruff/rules/
@@ -178,6 +179,9 @@ lint.ignore = [
   "TD002",
   "TD003",
 ]
+# Tests can use assertions, magic numbers
+lint.per-file-ignores."tests/**/*" = [ "PLR2004", "S101" ]
+
 lint.flake8-tidy-imports.ban-relative-imports = "all"
 lint.isort.force-single-line = true
 lint.isort.known-first-party = [ "pymkv" ]

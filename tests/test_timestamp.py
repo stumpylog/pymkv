@@ -1,6 +1,7 @@
 import pytest
-from typing import Any
+
 from pymkv.Timestamp import Timestamp
+
 
 class TestInitialization:
     """Tests for the Timestamp class __init__ method."""
@@ -62,6 +63,7 @@ class TestInitialization:
         with pytest.raises(TypeError):
             Timestamp(12.34)
 
+
 class TestProperties:
     """Tests for the properties of the Timestamp class."""
 
@@ -115,6 +117,7 @@ class TestProperties:
         ts.form = "HH:MM:SS"
         assert ts.form == "HH:MM:SS"
 
+
 class TestComparisons:
     """Tests for the comparison methods of the Timestamp class."""
 
@@ -126,7 +129,7 @@ class TestComparisons:
             pytest.param("01:01:01.0", "01:01:02.0", False, id="unequal_seconds"),
             pytest.param("01:01:00.0", "01:02:00.0", False, id="unequal_minutes"),
             pytest.param("01:00:00.0", "02:00:00.0", False, id="unequal_hours"),
-        ]
+        ],
     )
     def test_eq_ne(self, ts1_str: str, ts2_str: str, is_equal: bool):
         """Test equality (==) and inequality (!=) comparisons."""
@@ -142,7 +145,7 @@ class TestComparisons:
             pytest.param("01:01:01.9", "01:01:02.0", id="compare_seconds"),
             pytest.param("01:01:59.0", "01:02:00.0", id="compare_minutes"),
             pytest.param("01:59:00.0", "02:00:00.0", id="compare_hours"),
-        ]
+        ],
     )
     def test_lt_gt(self, ts_smaller_str: str, ts_larger_str: str):
         """Test less than (<) and greater than (>) comparisons."""
@@ -158,7 +161,7 @@ class TestComparisons:
         [
             pytest.param("01:01:01.1", "01:01:01.2", id="less_than"),
             pytest.param("01:01:01.1", "01:01:01.1", id="equal_to"),
-        ]
+        ],
     )
     def test_le_ge(self, ts_smaller_str: str, ts_larger_str: str):
         """Test less than or equal to (<=) and greater than or equal to (>=)."""
@@ -169,6 +172,7 @@ class TestComparisons:
         if ts_smaller_str != ts_larger_str:
             assert not (ts_larger <= ts_smaller)
             assert not (ts_smaller >= ts_larger)
+
 
 class TestDunderMethods:
     """Tests for other dunder methods in the Timestamp class."""
@@ -186,6 +190,7 @@ class TestDunderMethods:
         assert ts[2] == 3
         assert ts[3] == 9
 
+
 class TestStaticMethods:
     """Tests for static methods in the Timestamp class."""
 
@@ -197,7 +202,7 @@ class TestStaticMethods:
             pytest.param("12:34:56.123456789", id="full_timestamp_with_ns"),
             pytest.param("59:59", id="mm_ss"),
             pytest.param("1:2", id="m_s"),
-        ]
+        ],
     )
     def test_verify_valid(self, timestamp_str: str):
         """Test Timestamp.verify with valid timestamp strings."""
@@ -210,7 +215,7 @@ class TestStaticMethods:
             pytest.param("12:34:56.", id="trailing_dot"),
             pytest.param("12:34:56.1234567890", id="too_many_ns_digits"),
             pytest.param("timestamp", id="non_numeric_string"),
-        ]
+        ],
     )
     def test_verify_invalid(self, timestamp_str: str):
         """Test Timestamp.verify with invalid timestamp strings."""

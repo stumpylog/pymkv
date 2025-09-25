@@ -2,6 +2,7 @@ from pathlib import Path
 
 from pymkv.MKVFile import MKVFile
 
+
 class TestFileInit:
     def test_basic_init(self, sample_x264_mkv_file: Path) -> None:
         mkv_file = MKVFile(str(sample_x264_mkv_file))
