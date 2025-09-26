@@ -37,6 +37,7 @@ Combine two MKVs. This example takes two existing MKVs and combines their tracks
 
 import json
 import subprocess as sp
+from collections.abc import Iterable
 from os import devnull
 from os.path import expanduser
 from os.path import isfile
@@ -507,7 +508,7 @@ class MKVFile:
         if link:
             self._split_options += "--link"
 
-    def split_duration(self, duration, link=False):
+    def split_duration(self, duration: int, link=False):
         """Split the output file into parts by duration.
 
         Parameters
@@ -518,11 +519,11 @@ class MKVFile:
         link : bool, optional
             Determines if the split files should be linked together after splitting.
         """
-        self._split_options = ["--split", "duration:" + str(Timestamp(duration))]
+        self._split_options = ["--split", "duration:" + str(Timestamp.from_seconds(duration))]
         if link:
             self._split_options += "--link"
 
-    def split_timestamps(self, *timestamps, link=False):
+    def split_timestamps(self, timestamps: Iterable[Timestamp], link=False):
         """Split the output file into parts by timestamps.
 
         Parameters
@@ -546,13 +547,13 @@ class MKVFile:
         if None in ts_flat:
             raise ValueError(f'"{timestamps}" are not properly formatted timestamps')
         for ts_1, ts_2 in zip(ts_flat[:-1], ts_flat[1:]):
-            if Timestamp(ts_1) >= Timestamp(ts_2):
+            if ts_1 >= ts_2:
                 raise ValueError(f'"{timestamps}" are not properly formatted timestamps')
 
         # build ts_string from timestamps
         ts_string = "timestamps:"
         for ts in ts_flat:
-            ts_string += str(Timestamp(ts)) + ","
+            ts_string += str(ts) + ","
         self._split_options = ["--split", ts_string[:-1]]
         if link:
             self._split_options += "--link"

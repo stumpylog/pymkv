@@ -1,231 +1,159 @@
-# sheldon woodward
-# 3/16/18
+import re
+from functools import total_ordering
+from typing import Final
 
-"""Timestamp Class"""
+# Time conversion constants
+SECONDS_PER_HOUR: Final[int] = 3600
+SECONDS_PER_MINUTE: Final[int] = 60
+MINUTES_PER_HOUR: Final[int] = 60
+NANOSECONDS_PER_SECOND: Final[int] = 1_000_000_000
+NANOSECOND_PRECISION: Final[int] = 9
 
-from re import match
+TIMESTAMP_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\d{1,2}(:\d{1,2}){1,2}(\.\d{1,9})?$")
 
 
+@total_ordering
 class Timestamp:
-    def __init__(self, timestamp=None, hh=None, mm=None, ss=None, nn=None, form="MM:SS"):
-        """A class that represents a timestamp used in MKVFiles.
+    """Represents a timestamp for mkvmerge in format HH:MM:SS.nnnnnnnnn"""
 
-        The Timestamp class represents a timestamp used in mkvmerge. These are commonly used for splitting MKVFiles.
-        Specific time values can overridden in the timestamp using 'hh', 'mm', 'ss', and 'nn'. Any override value
-        that is greater than its maximum (ex. 61 minutes) will be set to 0.
+    def __init__(self, total_seconds: int, nanoseconds: int = 0) -> None:
+        """Create a timestamp from canonical values.
 
-        timestamp (str, int, Timestamp):
-            A str of a timestamp acceptable to mkvmerge or an int representing seconds. This value will be
-            the basis of the timestamp.
-        hh (int):
-            Hours in the timestamp. This will override the hours in the given timestamp.
-        mm (int):
-            Minutes in the timestamp. This will override the minutes in the given timestamp.
-        ss (int):
-            Seconds in the timestamp. This will override the seconds in the given timestamp.
-        nn (int):
-            Nanoseconds in the timestamp. This will override the nanoseconds in the given timestamp.
-        form (int):
-            A str for the form of the returned timestamp. 'MM' and 'SS' must be included where 'HH' and 'NN' are
-            optional but will be included if 'hh' and 'nn' are not zero.
+        Args:
+            total_seconds: Total seconds (integer part)
+            nanoseconds: Nanosecond part (0-999999999)
         """
-        self._hh = hh
-        self._mm = mm
-        self._ss = ss
-        self._nn = nn
-        self._form = form
-        if isinstance(timestamp, Timestamp):
-            self._hh = timestamp.hh
-            self._mm = timestamp.mm
-            self._ss = timestamp.ss
-            self._nn = timestamp.nn
-        elif timestamp is not None:
-            self.extract(timestamp)
+        if nanoseconds < 0 or nanoseconds >= NANOSECONDS_PER_SECOND:
+            raise ValueError(f"Nanoseconds must be 0-{NANOSECONDS_PER_SECOND - 1}, got {nanoseconds}")
+
+        self._total_seconds: int = int(total_seconds)
+        self._nanoseconds: int = int(nanoseconds)
+
+    @staticmethod
+    def from_string(timestamp_str: str) -> "Timestamp":
+        """Create a timestamp from a string like 'HH:MM:SS.nnnnnnnnn'.
+
+        Args:
+            timestamp_str: String in format HH:MM:SS.nnn, MM:SS.nnn, etc.
+
+        Returns:
+            New Timestamp object
+        """
+        if not TIMESTAMP_PATTERN.match(timestamp_str):
+            raise ValueError(f"Invalid timestamp format: {timestamp_str}")
+
+        parts = timestamp_str.split(":")
+        # MM:SS or MM:SS.nnn
+        if len(parts) == 2:  # noqa: PLR2004
+            hh = "0"
+            mm, ss_with_ns = parts
+        else:  # HH:MM:SS or HH:MM:SS.nnn
+            hh, mm, ss_with_ns = parts
+
+        # Split seconds and nanoseconds
+        if "." in ss_with_ns:
+            ss, ns = ss_with_ns.split(".")
+            # Pad nanoseconds to 9 digits
+            nanoseconds = int(ns.ljust(NANOSECOND_PRECISION, "0"))
         else:
-            self._hh = 0 if self._hh is None else self._hh
-            self._mm = 0 if self._mm is None else self._mm
-            self._ss = 0 if self._ss is None else self._ss
-            self._nn = 0 if self._nn is None else self._nn
+            ss = ss_with_ns
+            nanoseconds = 0
 
-    def __eq__(self, other):
-        return self.hh == other.hh and self.mm == other.mm and self.ss == other.ss and self.nn == other.nn
+        total_seconds = int(hh) * SECONDS_PER_HOUR + int(mm) * SECONDS_PER_MINUTE + int(ss)
+        return Timestamp(total_seconds, nanoseconds)
 
-    def __ne__(self, other):
-        return self.hh != other.hh or self.mm != other.mm or self.ss != other.ss or self.nn != other.nn
+    @staticmethod
+    def from_seconds(seconds: int | float) -> "Timestamp":
+        """Create a timestamp from seconds (int or float).
 
-    def __lt__(self, other):
-        if self.hh != other.hh:
-            return self.hh < other.hh
-        elif self.mm != other.mm:
-            return self.mm < other.mm
-        elif self.ss != other.ss:
-            return self.ss < other.ss
-        elif self.nn != other.nn:
-            return self.nn < other.nn
-        return False
+        Args:
+            seconds: Time in seconds
 
-    def __le__(self, other):
-        if self.hh != other.hh:
-            return self.hh <= other.hh
-        elif self.mm != other.mm:
-            return self.mm <= other.mm
-        elif self.ss != other.ss:
-            return self.ss <= other.ss
-        elif self.nn != other.nn:
-            return self.nn <= other.nn
-        return True
+        Returns:
+            New Timestamp object
+        """
+        if isinstance(seconds, float):
+            total_seconds = int(seconds)
+            nanoseconds = int((seconds - total_seconds) * NANOSECONDS_PER_SECOND)
+        else:
+            total_seconds = seconds
+            nanoseconds = 0
 
-    def __gt__(self, other):
-        if self.hh != other.hh:
-            return self.hh > other.hh
-        elif self.mm != other.mm:
-            return self.mm > other.mm
-        elif self.ss != other.ss:
-            return self.ss > other.ss
-        elif self.nn != other.nn:
-            return self.nn > other.nn
-        return False
+        return Timestamp(total_seconds, nanoseconds)
 
-    def __ge__(self, other):
-        if self.hh != other.hh:
-            return self.hh >= other.hh
-        elif self.mm != other.mm:
-            return self.mm >= other.mm
-        elif self.ss != other.ss:
-            return self.ss >= other.ss
-        elif self.nn != other.nn:
-            return self.nn >= other.nn
-        return True
+    @staticmethod
+    def from_timestamp(other: "Timestamp") -> "Timestamp":
+        """Create a timestamp from another Timestamp (copy constructor).
 
-    def __str__(self):
-        return self.ts
+        Args:
+            other: Another Timestamp object
 
-    def __getitem__(self, index):
+        Returns:
+            New Timestamp object (copy)
+        """
+        return Timestamp(other._total_seconds, other._nanoseconds)  # noqa: SLF001
+
+    @staticmethod
+    def from_components(hours: int, minutes: int, seconds: int, nanoseconds: int = 0) -> "Timestamp":
+        """Create a timestamp from individual time components.
+
+        Args:
+            hours: Hours (0+)
+            minutes: Minutes (0-59)
+            seconds: Seconds (0-59)
+            nanoseconds: Nanoseconds (0-999999999)
+
+        Returns:
+            New Timestamp object
+        """
+        if minutes < 0 or minutes >= MINUTES_PER_HOUR:
+            raise ValueError(f"Minutes must be 0-59, got {minutes}")
+        if seconds < 0 or seconds >= SECONDS_PER_MINUTE:
+            raise ValueError(f"Seconds must be 0-59, got {seconds}")
+
+        total_seconds = hours * SECONDS_PER_HOUR + minutes * SECONDS_PER_MINUTE + seconds
+        return Timestamp(total_seconds, nanoseconds)
+
+    def __str__(self) -> str:
+        """Format as HH:MM:SS.nnnnnnnnn (strip trailing zeros from nanoseconds)."""
+        hours = self._total_seconds // SECONDS_PER_HOUR
+        minutes = (self._total_seconds % SECONDS_PER_HOUR) // SECONDS_PER_MINUTE
+        seconds = self._total_seconds % SECONDS_PER_MINUTE
+
+        # Format seconds and nanoseconds, strip trailing zeros
+        sec_str = f"{seconds:02d}" if self._nanoseconds == 0 else f"{seconds:02d}.{self._nanoseconds:09d}".rstrip("0")
+
+        return f"{hours:02d}:{minutes:02d}:{sec_str}"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Timestamp):
+            raise NotImplementedError
+        return self._total_seconds == other._total_seconds and self._nanoseconds == other._nanoseconds
+
+    def __lt__(self, other: "Timestamp") -> bool:
+        if self._total_seconds != other._total_seconds:
+            return self._total_seconds < other._total_seconds
+        return self._nanoseconds < other._nanoseconds
+
+    def __hash__(self) -> int:
+        return hash((self._total_seconds, self._nanoseconds))
+
+    def __getitem__(self, index: int) -> int:
+        """Get (hours, minutes, seconds, nanoseconds) by index."""
         return (self.hh, self.mm, self.ss, self.nn)[index]
 
     @property
-    def ts(self):
-        """Generates the timestamp specified in the object."""
-        # parse timestamp format
-        format_groups = match(r"^(([Hh]{1,2}):)?([Mm]{1,2}):([Ss]{1,2})(\.([Nn]{1,9}))?$", self.form).groups()
-        timestamp_format = [False if format_groups[i] is None else True for i in (1, 2, 3, 5)]
-
-        # create timestamp string
-        timestamp_string = ""
-        if timestamp_format[0] or self._hh:
-            timestamp_string += f"{self.hh:0=2d}:"
-        if timestamp_format[1] or self._mm:
-            timestamp_string += f"{self.mm:0=2d}:"
-        if timestamp_format[2] or self._ss:
-            timestamp_string += f"{self.ss:0=2d}"
-        if timestamp_format[3] or self._nn:
-            timestamp_string += f"{self.nn / 1000000000:.9f}".rstrip("0")[1:] if self.nn else ".0"
-        return timestamp_string
-
-    @ts.setter
-    def ts(self, timestamp):
-        """Set a new timestamp.
-
-        timestamp (str, int):
-            A str of a timestamp acceptable to mkvmerge or an int representing seconds. This value will be
-            the basis of the timestamp.
-        """
-        if not isinstance(timestamp, (int, str)):
-            raise TypeError(f'"{type(timestamp)}" is not str or int type')
-        else:
-            self._hh = None
-            self._mm = None
-            self._ss = None
-            self._nn = None
-            self.extract(timestamp)
+    def hh(self) -> int:
+        return int(self._total_seconds // SECONDS_PER_HOUR)
 
     @property
-    def hh(self):
-        return self._hh
-
-    @hh.setter
-    def hh(self, value):
-        self._hh = value
+    def mm(self) -> int:
+        return int((self._total_seconds % SECONDS_PER_HOUR) // SECONDS_PER_MINUTE)
 
     @property
-    def mm(self):
-        return self._mm
-
-    @mm.setter
-    def mm(self, value):
-        self._mm = value if value < 60 else 0
+    def ss(self) -> int:
+        return int(self._total_seconds % SECONDS_PER_MINUTE)
 
     @property
-    def ss(self):
-        return self._ss
-
-    @ss.setter
-    def ss(self, value):
-        self._ss = value if value < 60 else 0
-
-    @property
-    def nn(self):
-        return self._nn
-
-    @nn.setter
-    def nn(self, value):
-        self._nn = value if value < 1000000000 else 0
-
-    @property
-    def form(self):
-        return self._form
-
-    @form.setter
-    def form(self, form):
-        self._form = form
-
-    @staticmethod
-    def verify(timestamp):
-        """Verify a timestamp has the proper form to be used in mkvmerge.
-
-        timestamp (str, int):
-            The timestamp to be verified.
-        """
-        if not isinstance(timestamp, str):
-            raise TypeError(f'"{type(timestamp)}" is not str type')
-        elif match(r"^[0-9]{1,2}(:[0-9]{1,2}){1,2}(\.[0-9]{1,9})?$", timestamp):
-            return True
-        return False
-
-    def extract(self, timestamp):
-        """Extracts time info from a timestamp.
-
-        timestamp (str, int):
-            A str of a timestamp acceptable to mkvmerge or an int representing seconds. The timing info will be
-            extracted from this parameter.
-        """
-        if not isinstance(timestamp, (str, int)):
-            raise TypeError(f'"{type(timestamp)}" is not str or int type')
-        elif isinstance(timestamp, str) and not Timestamp.verify(timestamp):
-            raise ValueError(f'"{timestamp}" is not a valid timestamp')
-        elif isinstance(timestamp, str):
-            # parse timestamp
-            timestamp_groups = match(
-                r"^(([0-9]{1,2}):)?([0-9]{1,2}):([0-9]{1,2})(\.([0-9]{1,9}))?$",
-                timestamp,
-            ).groups()
-            timestamp = [timestamp_groups[i] for i in (1, 2, 3, 4)]
-            timestamp_clean = []
-
-            # clean timestamp
-            for ts in timestamp:
-                if ts is None:
-                    timestamp_clean.append(0)
-                else:
-                    timestamp_clean.append(float(ts))
-
-            # set timestamp variables
-            self.hh = int(timestamp_clean[0]) if self._hh is None else self._hh
-            self.mm = int(timestamp_clean[1]) if self._mm is None else self._mm
-            self.ss = int(timestamp_clean[2]) if self._ss is None else self._ss
-            self.nn = int(timestamp_clean[3] * 1000000000) if self._nn is None else self._nn
-        elif isinstance(timestamp, int):
-            self._hh = int(timestamp / 3600)
-            self._mm = int(timestamp % 3600 / 60)
-            self._ss = int(timestamp % 3600 % 60)
-            self._nn = 0
+    def nn(self) -> int:
+        return self._nanoseconds
