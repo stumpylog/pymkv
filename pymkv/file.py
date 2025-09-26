@@ -44,12 +44,12 @@ from os.path import isfile
 
 import bitmath
 
-from pymkv.ISO639_2 import is_ISO639_2
-from pymkv.MKVAttachment import MKVAttachment
-from pymkv.MKVTrack import MKVTrack
-from pymkv.Timestamp import Timestamp
-from pymkv.Verifications import verify_matroska
-from pymkv.Verifications import verify_mkvmerge
+from pymkv.attachment import MKVAttachment
+from pymkv.timestamp import Timestamp
+from pymkv.track import MKVTrack
+from pymkv.utils import is_iso_639_2_language_code
+from pymkv.verifications import verify_matroska
+from pymkv.verifications import verify_mkvmerge
 
 
 class MKVFile:
@@ -135,7 +135,7 @@ class MKVFile:
 
     @chapter_language.setter
     def chapter_language(self, language):
-        if language is not None and not is_ISO639_2(language):
+        if language is not None and not is_iso_639_2_language_code(language):
             raise ValueError("not an ISO639-2 language code")
         self._chapter_language = language
 

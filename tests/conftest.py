@@ -59,8 +59,8 @@ def sample_with_subs_file(sample_dir: Path) -> Path:
 @pytest.fixture
 def mock_mkvmerge_verification(mocker: MockerFixture):
     """
-    Automatically patches pymkv.Verifications.verify_mkvmerge
+    Automatically patches pymkv.verifications.verify_mkvmerge
     to return True.
     """
     # The patch is applied when the fixture starts and removed when the class finishes.
-    mocker.patch("pymkv.Verifications.verify_mkvmerge", return_value=True)
+    mocker.patch("pymkv.verifications.verify_mkvmerge", return_value=True)

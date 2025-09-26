@@ -2,14 +2,14 @@
 # august 5, 2019
 
 # package imports
-from pymkv.MKVAttachment import MKVAttachment
-from pymkv.MKVFile import MKVFile
-from pymkv.MKVTrack import MKVTrack
-from pymkv.Timestamp import Timestamp
-from pymkv.Verifications import verify_matroska
-from pymkv.Verifications import verify_mkvmerge
-from pymkv.Verifications import verify_recognized
-from pymkv.Verifications import verify_supported
+from pymkv.attachment import MKVAttachment
+from pymkv.file import MKVFile
+from pymkv.timestamp import Timestamp
+from pymkv.track import MKVTrack
+from pymkv.verifications import verify_matroska
+from pymkv.verifications import verify_mkvmerge
+from pymkv.verifications import verify_recognized
+from pymkv.verifications import verify_supported
 
 __all__ = [
     "MKVAttachment",

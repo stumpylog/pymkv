@@ -1,6 +1,6 @@
 import pytest
 
-from pymkv.Timestamp import Timestamp
+from pymkv.timestamp import Timestamp
 
 
 class TestInitialization:

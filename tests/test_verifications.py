@@ -5,10 +5,10 @@ from pathlib import Path
 import pytest
 from pytest_mock import MockerFixture
 
-from pymkv.Verifications import verify_matroska
-from pymkv.Verifications import verify_mkvmerge
-from pymkv.Verifications import verify_recognized
-from pymkv.Verifications import verify_supported
+from pymkv.verifications import verify_matroska
+from pymkv.verifications import verify_mkvmerge
+from pymkv.verifications import verify_recognized
+from pymkv.verifications import verify_supported
 
 
 class TestVerifyMkvmerge:
@@ -149,7 +149,7 @@ class TestVerifyMatroska:
 
     def test_verify_matroska_mkvmerge_not_found(self, mocker, sample_x264_mkv_file: Path):
         """Test Matroska verification when mkvmerge not found."""
-        mocker.patch("pymkv.Verifications.verify_mkvmerge", return_value=False)
+        mocker.patch("pymkv.verifications.verify_mkvmerge", return_value=False)
 
         with pytest.raises(FileNotFoundError, match="mkvmerge is not at the specified path"):
             verify_matroska(str(sample_x264_mkv_file))
@@ -190,8 +190,8 @@ class TestVerifyMatroska:
 
         mock_check_output = mocker.patch("subprocess.check_output")
         mock_check_output.return_value = json.dumps(mock_mkvmerge_info).encode()
-        _ = mocker.patch("pymkv.Verifications.isfile", return_value=True)
-        mock_expanduser = mocker.patch("pymkv.Verifications.expanduser", return_value="/home/user/video.mkv")
+        _ = mocker.patch("pymkv.verifications.isfile", return_value=True)
+        mock_expanduser = mocker.patch("pymkv.verifications.expanduser", return_value="/home/user/video.mkv")
 
         verify_matroska("~/video.mkv")
 
@@ -245,7 +245,7 @@ class TestVerifyRecognized:
 
     def test_verify_recognized_mkvmerge_not_found(self, mocker, sample_x264_mkv_file: Path):
         """Test verify_recognized when mkvmerge not found."""
-        mocker.patch("pymkv.Verifications.verify_mkvmerge", return_value=False)
+        mocker.patch("pymkv.verifications.verify_mkvmerge", return_value=False)
 
         with pytest.raises(FileNotFoundError, match="mkvmerge is not at the specified path"):
             verify_recognized(str(sample_x264_mkv_file))
@@ -318,7 +318,7 @@ class TestVerifySupported:
 
     def test_verify_supported_mkvmerge_not_found(self, mocker, sample_x264_mkv_file: Path):
         """Test verify_supported when mkvmerge not found."""
-        mocker.patch("pymkv.Verifications.verify_mkvmerge", return_value=False)
+        mocker.patch("pymkv.verifications.verify_mkvmerge", return_value=False)
 
         with pytest.raises(FileNotFoundError, match="mkvmerge is not at the specified path"):
             verify_supported(str(sample_x264_mkv_file))

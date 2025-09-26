@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pymkv.MKVFile import MKVFile
+from pymkv.file import MKVFile
 
 
 class TestFileInit:
