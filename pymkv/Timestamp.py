@@ -1,5 +1,3 @@
-"""Simplified Timestamp class for mkvmerge with static factory methods."""
-
 import re
 from functools import total_ordering
 from typing import Final
@@ -10,6 +8,8 @@ SECONDS_PER_MINUTE: Final[int] = 60
 MINUTES_PER_HOUR: Final[int] = 60
 NANOSECONDS_PER_SECOND: Final[int] = 1_000_000_000
 NANOSECOND_PRECISION: Final[int] = 9
+
+TIMESTAMP_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\d{1,2}(:\d{1,2}){1,2}(\.\d{1,9})?$")
 
 
 @total_ordering
@@ -39,7 +39,7 @@ class Timestamp:
         Returns:
             New Timestamp object
         """
-        if not re.match(r"^\d{1,2}(:\d{1,2}){1,2}(\.\d{1,9})?$", timestamp_str):
+        if not TIMESTAMP_PATTERN.match(timestamp_str):
             raise ValueError(f"Invalid timestamp format: {timestamp_str}")
 
         parts = timestamp_str.split(":")
