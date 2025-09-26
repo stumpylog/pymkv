@@ -5,6 +5,9 @@ from pathlib import Path
 import pytest
 from pytest_mock import MockerFixture
 
+from pymkv.errors import InputFileNotFoundError
+from pymkv.errors import MkvMergeNotFoundError
+from pymkv.errors import MkvMergeSubprocessError
 from pymkv.verifications import verify_matroska
 from pymkv.verifications import verify_mkvmerge
 from pymkv.verifications import verify_recognized
@@ -151,7 +154,7 @@ class TestVerifyMatroska:
         """Test Matroska verification when mkvmerge not found."""
         mocker.patch("pymkv.verifications.verify_mkvmerge", return_value=False)
 
-        with pytest.raises(FileNotFoundError, match="mkvmerge is not at the specified path"):
+        with pytest.raises(MkvMergeNotFoundError, match="mkvmerge is not at the specified path"):
             verify_matroska(str(sample_x264_mkv_file))
 
     def test_verify_matroska_pathlike_input(self, mocker, sample_x264_mkv_file: Path, mock_mkvmerge_info):
@@ -173,7 +176,7 @@ class TestVerifyMatroska:
     def test_verify_matroska_file_not_exists(self):
         """Test Matroska verification with non-existent file."""
 
-        with pytest.raises(FileNotFoundError, match="does not exist"):
+        with pytest.raises(InputFileNotFoundError, match="does not exist"):
             verify_matroska("/nonexistent/file.mkv")
 
     def test_verify_matroska_subprocess_error(self, mocker, sample_x264_mkv_file: Path):
@@ -182,7 +185,7 @@ class TestVerifyMatroska:
         mock_check_output = mocker.patch("subprocess.check_output")
         mock_check_output.side_effect = subprocess.CalledProcessError(1, "mkvmerge")
 
-        with pytest.raises(ValueError, match="could not be opened"):
+        with pytest.raises(MkvMergeSubprocessError, match="could not be opened"):
             verify_matroska(str(sample_x264_mkv_file))
 
     def test_verify_matroska_expanduser(self, mocker, mock_mkvmerge_info):
@@ -247,7 +250,7 @@ class TestVerifyRecognized:
         """Test verify_recognized when mkvmerge not found."""
         mocker.patch("pymkv.verifications.verify_mkvmerge", return_value=False)
 
-        with pytest.raises(FileNotFoundError, match="mkvmerge is not at the specified path"):
+        with pytest.raises(MkvMergeNotFoundError, match="mkvmerge is not at the specified path"):
             verify_recognized(str(sample_x264_mkv_file))
 
     def test_verify_recognized_invalid_type(self):
@@ -259,7 +262,7 @@ class TestVerifyRecognized:
     def test_verify_recognized_file_not_exists(self):
         """Test verify_recognized with non-existent file."""
 
-        with pytest.raises(FileNotFoundError, match="does not exist"):
+        with pytest.raises(InputFileNotFoundError, match="does not exist"):
             verify_recognized("/nonexistent/file.mkv")
 
     def test_verify_recognized_subprocess_error(self, mocker, sample_x264_mkv_file: Path):
@@ -268,7 +271,7 @@ class TestVerifyRecognized:
         mock_check_output = mocker.patch("subprocess.check_output")
         mock_check_output.side_effect = subprocess.CalledProcessError(1, "mkvmerge")
 
-        with pytest.raises(ValueError, match="could not be opened"):
+        with pytest.raises(MkvMergeSubprocessError, match="could not be opened"):
             verify_recognized(str(sample_x264_mkv_file))
 
 
@@ -320,7 +323,7 @@ class TestVerifySupported:
         """Test verify_supported when mkvmerge not found."""
         mocker.patch("pymkv.verifications.verify_mkvmerge", return_value=False)
 
-        with pytest.raises(FileNotFoundError, match="mkvmerge is not at the specified path"):
+        with pytest.raises(MkvMergeNotFoundError, match="mkvmerge is not at the specified path"):
             verify_supported(str(sample_x264_mkv_file))
 
     def test_verify_supported_invalid_type(self):
@@ -332,7 +335,7 @@ class TestVerifySupported:
     def test_verify_supported_file_not_exists(self):
         """Test verify_supported with non-existent file."""
 
-        with pytest.raises(FileNotFoundError, match="does not exist"):
+        with pytest.raises(InputFileNotFoundError, match="does not exist"):
             verify_supported("/nonexistent/file.mkv")
 
     def test_verify_supported_subprocess_error(self, mocker, sample_x264_mkv_file: Path):
@@ -341,16 +344,5 @@ class TestVerifySupported:
         mock_check_output = mocker.patch("subprocess.check_output")
         mock_check_output.side_effect = subprocess.CalledProcessError(1, "mkvmerge")
 
-        with pytest.raises(ValueError, match="could not be opened"):
-            verify_supported(str(sample_x264_mkv_file))
-
-    def test_verify_supported_bug_fix_format_string(self, mocker, sample_x264_mkv_file: Path):
-        """Test that verify_supported has the format string bug (missing file_path)."""
-
-        mock_check_output = mocker.patch("subprocess.check_output")
-        mock_check_output.side_effect = subprocess.CalledProcessError(1, "mkvmerge")
-
-        # This test documents the bug in the original code where the error message
-        # doesn't include the file_path in the format string
-        with pytest.raises(ValueError, match="could not be opened"):
+        with pytest.raises(MkvMergeSubprocessError, match="could not be opened"):
             verify_supported(str(sample_x264_mkv_file))

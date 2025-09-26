@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from pymkv.attachment import MKVAttachment
+from pymkv.errors import InputFileNotFoundError
 
 
 @pytest.fixture
@@ -45,7 +46,7 @@ class TestMKVAttachment:
         """
         Test that initializing with a non-existent file path raises FileNotFoundError.
         """
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(InputFileNotFoundError):
             MKVAttachment("nonexistent/file.txt")
 
     def test_file_path_setter(self, dummy_attachment_file: Path, tmp_path: Path):
@@ -68,5 +69,5 @@ class TestMKVAttachment:
         Test that setting file_path to a non-existent file raises FileNotFoundError.
         """
         attachment = MKVAttachment(str(dummy_attachment_file))
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(InputFileNotFoundError):
             attachment.file_path = "nonexistent/new_file.txt"

@@ -1,5 +1,6 @@
 import pytest
 
+from pymkv.errors import TimestampInvalidStringError
 from pymkv.timestamp import Timestamp
 
 
@@ -31,7 +32,7 @@ class TestInitialization:
 
     def test_init_with_invalid_string(self):
         """Test that initializing with a malformed string raises ValueError."""
-        with pytest.raises(ValueError):
+        with pytest.raises(TimestampInvalidStringError):
             Timestamp.from_string("not-a-timestamp")
 
     def test_init_with_invalid_type(self):

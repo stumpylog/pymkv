@@ -2,6 +2,9 @@ import re
 from functools import total_ordering
 from typing import Final
 
+from pymkv.errors import TimestampInvalidStringError
+from pymkv.errors import TimestampValueOutOfRangeError
+
 # Time conversion constants
 SECONDS_PER_HOUR: Final[int] = 3600
 SECONDS_PER_MINUTE: Final[int] = 60
@@ -24,7 +27,9 @@ class Timestamp:
             nanoseconds: Nanosecond part (0-999999999)
         """
         if nanoseconds < 0 or nanoseconds >= NANOSECONDS_PER_SECOND:
-            raise ValueError(f"Nanoseconds must be 0-{NANOSECONDS_PER_SECOND - 1}, got {nanoseconds}")
+            raise TimestampValueOutOfRangeError(
+                f"Nanoseconds must be 0-{NANOSECONDS_PER_SECOND - 1}, got {nanoseconds}",
+            )
 
         self._total_seconds: int = int(total_seconds)
         self._nanoseconds: int = int(nanoseconds)
@@ -40,7 +45,7 @@ class Timestamp:
             New Timestamp object
         """
         if not TIMESTAMP_PATTERN.match(timestamp_str):
-            raise ValueError(f"Invalid timestamp format: {timestamp_str}")
+            raise TimestampInvalidStringError(f"Invalid timestamp format: {timestamp_str}")
 
         parts = timestamp_str.split(":")
         # MM:SS or MM:SS.nnn
@@ -107,9 +112,9 @@ class Timestamp:
             New Timestamp object
         """
         if minutes < 0 or minutes >= MINUTES_PER_HOUR:
-            raise ValueError(f"Minutes must be 0-59, got {minutes}")
+            raise TimestampValueOutOfRangeError(f"Minutes must be 0-59, got {minutes}")
         if seconds < 0 or seconds >= SECONDS_PER_MINUTE:
-            raise ValueError(f"Seconds must be 0-59, got {seconds}")
+            raise TimestampValueOutOfRangeError(f"Seconds must be 0-59, got {seconds}")
 
         total_seconds = hours * SECONDS_PER_HOUR + minutes * SECONDS_PER_MINUTE + seconds
         return Timestamp(total_seconds, nanoseconds)

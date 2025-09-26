@@ -27,6 +27,8 @@ from mimetypes import guess_type
 from os.path import expanduser
 from os.path import isfile
 
+from pymkv.errors import InputFileNotFoundError
+
 
 class MKVAttachment:
     """A class that represents an MKV attachment for an :class:`~pymkv.MKVFile` object.
@@ -70,7 +72,7 @@ class MKVAttachment:
 
         Raises
         ------
-        FileNotFoundError
+        InputFileNotFoundError
             Raised if `file_path` does not exist.
         """
         return self._file_path
@@ -79,7 +81,7 @@ class MKVAttachment:
     def file_path(self, file_path):
         file_path = expanduser(file_path)
         if not isfile(file_path):
-            raise FileNotFoundError(f'"{file_path}" does not exist')
+            raise InputFileNotFoundError(f'"{file_path}" does not exist')
         self.mime_type = guess_type(file_path)[0]
         self.name = None
         self._file_path = file_path
