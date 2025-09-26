@@ -6,5 +6,5 @@
 from iso639 import is_language
 
 
-def is_ISO639_2(language):
+def is_iso_639_2_language_code(language: str) -> bool:
     return is_language(language, "pt2t")

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from pymkv.MKVAttachment import MKVAttachment
+from pymkv.attachment import MKVAttachment
 
 
 @pytest.fixture

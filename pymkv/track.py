@@ -40,8 +40,8 @@ import subprocess as sp
 from os.path import expanduser
 from os.path import isfile
 
-from pymkv.ISO639_2 import is_ISO639_2
-from pymkv.Verifications import verify_supported
+from pymkv.utils import is_iso_639_2_language_code
+from pymkv.verifications import verify_supported
 
 
 class MKVTrack:
@@ -189,7 +189,7 @@ class MKVTrack:
 
     @language.setter
     def language(self, language):
-        if language is None or language.lower() == "und" or is_ISO639_2(language):
+        if language is None or language.lower() == "und" or is_iso_639_2_language_code(language):
             self._language = language
         else:
             raise ValueError("not an ISO639-2 language code")
