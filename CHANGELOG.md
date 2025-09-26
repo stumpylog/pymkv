@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking
 
-- Internal file and function renaming
+- Internal file and function renaming ([#6](https://github.com/stumpylog/pymkv/pull/6))
   - Renamed all internal files so they are proper Python module names
   - Renamed internal ISO639 checking function
 
