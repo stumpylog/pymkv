@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pytest_mock import MockerFixture
@@ -57,10 +58,20 @@ def sample_with_subs_file(sample_dir: Path) -> Path:
 
 
 @pytest.fixture
-def mock_mkvmerge_verification(mocker: MockerFixture):
-    """
-    Automatically patches pymkv.verifications.verify_mkvmerge
-    to return True.
-    """
-    # The patch is applied when the fixture starts and removed when the class finishes.
-    mocker.patch("pymkv.verifications.verify_mkvmerge", return_value=True)
+def dummy_attachment_file(tmp_path: Path) -> Path:
+    """Create a dummy file to be used as an attachment."""
+    file_path = tmp_path / "attachment.txt"
+    file_path.write_text("This is a test attachment.")
+    return file_path
+
+
+@pytest.fixture
+def mock_dependencies(mocker: MockerFixture) -> dict[str, Any]:
+    """Central fixture to mock all external dependencies."""
+    mock_run = mocker.patch("pymkv.utils.subprocess.run")
+    mocker.patch(
+        "pymkv.utils.get_mkvmerge_path",
+        return_value=Path("/fake/path/to/mkvmerge"),
+    )
+    mock_logger = mocker.patch("pymkv.utils.logging.getLogger").return_value
+    return {"run": mock_run, "logger": mock_logger}

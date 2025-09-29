@@ -23,13 +23,22 @@ Now, the MKV can be muxed with both attachments.
 >>> mkv.mux('path/to/output.mkv')
 """
 
-from mimetypes import guess_type
-from os.path import expanduser
-from os.path import isfile
+import json
+import logging
+from functools import total_ordering
+from os import PathLike
+from pathlib import Path
 
-from pymkv.errors import InputFileNotFoundError
+from pymkv.errors import NoTracksError
+from pymkv.errors import UnsupportedContainerError
+from pymkv.models import Attachment
+from pymkv.models import MkvmergeIdentificationOutput
+from pymkv.utils import run_mkvmerge
+
+logger = logging.getLogger(__name__)
 
 
+@total_ordering
 class MKVAttachment:
     """A class that represents an MKV attachment for an :class:`~pymkv.MKVFile` object.
 
@@ -58,30 +67,100 @@ class MKVAttachment:
         which will attach to all files.
     """
 
-    def __init__(self, file_path, name=None, description=None, attach_once=False):
-        self.mime_type = None
-        self._file_path = None
-        self.file_path = file_path
+    def __init__(
+        self,
+        file_path: Path,
+        id_: int,
+        size: int,
+        uid: int | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        content_type: str | None = None,
+        *,
+        attach_once: bool = False,
+    ):
+        # immutable once set
+        self._id = id_
+        self._size = size
+        self._uid = uid
+        self._content_type = content_type
+        self._file_path = file_path.expanduser().resolve()
+
+        # Can be changed by the user
         self.name = name
         self.description = description
         self.attach_once = attach_once
 
-    @property
-    def file_path(self):
-        """str: The path to the attachment file.
+    @staticmethod
+    def from_json(file_path: Path, data: Attachment) -> "MKVAttachment":
+        return MKVAttachment(
+            file_path,
+            data["id"],
+            data["size"],
+            data["properties"].get("uid"),
+            data["file_name"],
+            data.get("description"),
+            data.get("content_type"),
+        )
 
-        Raises
-        ------
-        InputFileNotFoundError
-            Raised if `file_path` does not exist.
+    @staticmethod
+    def from_file(file_path: Path | PathLike | str) -> "MKVAttachment":
+        file_path = Path(file_path).expanduser().resolve()
+        info_json: MkvmergeIdentificationOutput = json.loads(
+            run_mkvmerge(["--identify", "--identification-format", "json", str(file_path)]),
+        )
+
+        if not info_json.get("container", {}).get("supported", False):
+            raise UnsupportedContainerError
+
+        if "attachments" not in info_json or len(info_json["attachments"]) == 0:
+            raise NoTracksError
+        elif len(info_json["attachments"]) > 1:
+            logger.warning(f"Multiple attachments detected in {file_path}, selected the first")
+
+        return MKVAttachment.from_json(file_path, info_json["attachments"][0])
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, MKVAttachment):
+            raise NotImplementedError
+        return self._id == other._id
+
+    def __lt__(self, other: "MKVAttachment") -> bool:
+        return self._id < other._id
+
+    def __hash__(self) -> int:
+        return hash((self._id,))
+
+    def command(self) -> list[str]:
         """
-        return self._file_path
+        Generate mkvmerge command arguments for this attachment.
 
-    @file_path.setter
-    def file_path(self, file_path):
-        file_path = expanduser(file_path)
-        if not isfile(file_path):
-            raise InputFileNotFoundError(f'"{file_path}" does not exist')
-        self.mime_type = guess_type(file_path)[0]
-        self.name = None
-        self._file_path = file_path
+        Builds a list of command-line arguments for mkvmerge based on the attachment's
+        configuration, including optional metadata and the appropriate attach method.
+
+        Returns:
+            list[str]: Complete list of mkvmerge command arguments for this attachment,
+                    ending with the file attachment directive.
+        """
+        command = []
+
+        # Attachment metadata options with None checks
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.attachment_name
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.attachment_description
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.attachment_mime_type
+        attachment_options = [
+            (self.name, "--attachment-name", self.name),
+            (self.description, "--attachment-description", self.description),
+            (self._content_type, "--attachment-mime-type", self._content_type),
+        ]
+
+        for condition, flag, value in attachment_options:
+            if condition is not None:
+                command.extend([flag, value])
+
+        # Add attachment with appropriate method
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.attach_file
+        attach_flag = "--attach-file-once" if self.attach_once else "--attach-file"
+        command.extend([attach_flag, str(self._file_path)])
+
+        return command

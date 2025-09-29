@@ -33,8 +33,8 @@ classifiers = [
 dynamic = [ "version" ]
 
 dependencies = [
-  "bitmath",
   "iso639-lang",
+  "typing-extensions; python_version<'3.11'",
 ]
 urls.Homepage = "https://github.com/sheldonkwoodward/pymkv"
 
@@ -89,7 +89,7 @@ dependencies = [
 [tool.hatch.envs.typing.scripts]
 run = [
   "mypy --version",
-  "mypy --install-types --non-interactive {args:src/simpleiso3166}",
+  "mypy --install-types --non-interactive {args:pymkv}",
 ]
 
 [tool.hatch.envs.pre-commit]
@@ -103,6 +103,19 @@ dependencies = [
 [tool.hatch.envs.pre-commit.scripts]
 check = [ "pre-commit run --all-files" ]
 update = [ "pre-commit autoupdate" ]
+
+[tool.hatch.envs.data-model]
+template = "data-model"
+detached = true
+dependencies = [
+  "datamodel-code-generator[http]",
+]
+
+[tool.hatch.envs.data-model.scripts]
+generate = [
+  "datamodel-codegen --url https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v20.json --output pymkv/models.py --use-double-quotes --target-python-version 3.9 --output-model-type typing.TypedDict --use-schema-description",
+]
+help = [ "datamodel-codegen --help" ]
 
 [tool.ruff]
 target-version = "py39"
@@ -179,8 +192,8 @@ lint.ignore = [
   "TD002",
   "TD003",
 ]
-# Tests can use assertions, magic numbers
-lint.per-file-ignores."tests/**/*" = [ "PLR2004", "S101" ]
+# Tests can use assertions, magic numbers, private numbers
+lint.per-file-ignores."tests/**/*" = [ "PLR2004", "S101", "SLF001" ]
 
 lint.flake8-tidy-imports.ban-relative-imports = "all"
 lint.isort.force-single-line = true
@@ -194,7 +207,7 @@ source_pkgs = [ "pymkv", "tests" ]
 branch = true
 parallel = true
 omit = [
-  "src/pymkv/__about__.py",
+  "pymkv/__about__.py",
   "tests/conftest.py",
   "tests/utils.py",
 ]

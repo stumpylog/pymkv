@@ -72,7 +72,7 @@ class TestComparisons:
             pytest.param("01:00:00.0", "02:00:00.0", False, id="unequal_hours"),
         ],
     )
-    def test_eq_ne(self, ts1_str: str, ts2_str: str, is_equal: bool):
+    def test_eq_ne(self, ts1_str: str, ts2_str: str, is_equal: bool):  # noqa: FBT001
         """Test equality (==) and inequality (!=) comparisons."""
         ts1 = Timestamp.from_string(ts1_str)
         ts2 = Timestamp.from_string(ts2_str)

@@ -1,3 +1,5 @@
+import dataclasses
+import logging
 import re
 from functools import total_ordering
 from typing import Final
@@ -14,6 +16,8 @@ NANOSECOND_PRECISION: Final[int] = 9
 
 TIMESTAMP_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\d{1,2}(:\d{1,2}){1,2}(\.\d{1,9})?$")
 
+logger = logging.getLogger(__name__)
+
 
 @total_ordering
 class Timestamp:
@@ -27,9 +31,9 @@ class Timestamp:
             nanoseconds: Nanosecond part (0-999999999)
         """
         if nanoseconds < 0 or nanoseconds >= NANOSECONDS_PER_SECOND:
-            raise TimestampValueOutOfRangeError(
-                f"Nanoseconds must be 0-{NANOSECONDS_PER_SECOND - 1}, got {nanoseconds}",
-            )
+            msg = f"Nanoseconds must be 0-{NANOSECONDS_PER_SECOND - 1}, got {nanoseconds}"
+            logger.error(msg)
+            raise TimestampValueOutOfRangeError(msg)
 
         self._total_seconds: int = int(total_seconds)
         self._nanoseconds: int = int(nanoseconds)
@@ -45,7 +49,9 @@ class Timestamp:
             New Timestamp object
         """
         if not TIMESTAMP_PATTERN.match(timestamp_str):
-            raise TimestampInvalidStringError(f"Invalid timestamp format: {timestamp_str}")
+            msg = f"Invalid timestamp format: {timestamp_str}"
+            logger.error(msg)
+            raise TimestampInvalidStringError(msg)
 
         parts = timestamp_str.split(":")
         # MM:SS or MM:SS.nnn
@@ -112,9 +118,13 @@ class Timestamp:
             New Timestamp object
         """
         if minutes < 0 or minutes >= MINUTES_PER_HOUR:
-            raise TimestampValueOutOfRangeError(f"Minutes must be 0-59, got {minutes}")
+            msg = f"Minutes must be 0-59, got {minutes}"
+            logger.error(msg)
+            raise TimestampValueOutOfRangeError(msg)
         if seconds < 0 or seconds >= SECONDS_PER_MINUTE:
-            raise TimestampValueOutOfRangeError(f"Seconds must be 0-59, got {seconds}")
+            msg = f"Seconds must be 0-59, got {seconds}"
+            logger.error(msg)
+            raise TimestampValueOutOfRangeError(msg)
 
         total_seconds = hours * SECONDS_PER_HOUR + minutes * SECONDS_PER_MINUTE + seconds
         return Timestamp(total_seconds, nanoseconds)
@@ -162,3 +172,21 @@ class Timestamp:
     @property
     def nn(self) -> int:
         return self._nanoseconds
+
+
+@dataclasses.dataclass(frozen=True)
+class TimeRange:
+    """Represents a time range with optional start/end timestamps."""
+
+    start: Timestamp | None = None
+    end: Timestamp | None = None
+    append_to_previous: bool = False
+
+
+@dataclasses.dataclass(frozen=True)
+class FrameRange:
+    """Represents a frame range with optional start/end frame numbers."""
+
+    start: int | None = None
+    end: int | None = None
+    append_to_previous: bool = False

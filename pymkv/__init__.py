@@ -3,21 +3,33 @@
 
 # package imports
 from pymkv.attachment import MKVAttachment
+from pymkv.errors import InputFileNotFoundError
+from pymkv.errors import InvalidLanguageError
+from pymkv.errors import MkvMergeNotFoundError
+from pymkv.errors import MkvMergeSubprocessError
+from pymkv.errors import NoTracksError
+from pymkv.errors import PyMkvBaseError
+from pymkv.errors import TimestampBaseError
+from pymkv.errors import TimestampInvalidStringError
+from pymkv.errors import TimestampValueOutOfRangeError
+from pymkv.errors import UnsupportedContainerError
 from pymkv.file import MKVFile
 from pymkv.timestamp import Timestamp
 from pymkv.track import MKVTrack
-from pymkv.verifications import verify_matroska
-from pymkv.verifications import verify_mkvmerge
-from pymkv.verifications import verify_recognized
-from pymkv.verifications import verify_supported
 
 __all__ = [
+    "InputFileNotFoundError",
+    "InvalidLanguageError",
     "MKVAttachment",
     "MKVFile",
     "MKVTrack",
+    "MkvMergeNotFoundError",
+    "MkvMergeSubprocessError",
+    "NoTracksError",
+    "PyMkvBaseError",
     "Timestamp",
-    "verify_matroska",
-    "verify_mkvmerge",
-    "verify_recognized",
-    "verify_supported",
+    "TimestampBaseError",
+    "TimestampInvalidStringError",
+    "TimestampValueOutOfRangeError",
+    "UnsupportedContainerError",
 ]

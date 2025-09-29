@@ -1,177 +1,94 @@
-""":class:`~pymkv.MKVTrack` classes are used to represent tracks within an MKV or to be used in an MKV. They can
-represent a video, audio, or subtitle track.
-
-Examples
---------
-Below are some basic examples of how the :class:`~pymkv.MKVTrack` objects can be used.
-
-Create a new :class:`~pymkv.MKVTrack` from a track file. This example takes a standalone track file and uses it in an
-:class:`~pymkv.MKVTrack`.
-
->>> from pymkv import MKVTrack
->>> track1 = MKVTrack('path/to/track.h264')
->>> track1.track_name = 'Some Name'
->>> track1.language = 'eng'
-
-Create a new :class:`~pymkv.MKVTrack` from an MKV file. This example will take a specific track from an MKV and also
-prevent any global tags from being included if the :class:`~pymkv.MKVTrack` is muxed into an :class:`~pymkv.MKVFile`.
-
->>> track2 = MKVTrack('path/to/track.aac')
->>> track2.language = 'eng'
-
-Create a new :class:`~pymkv.MKVTrack` from an MKV file. This example will take a specific track from an MKV and also
-prevent any global tags from being included if the :class:`~pymkv.MKVTrack` is muxed into an :class:`~pymkv.MKVFile`.
-
->>> track3 = MKVTrack('path/to/MKV.mkv', track_id=1)
->>> track3.no_global_tags = True
-
-Now all these tracks can be added to an :class:`~pymkv.MKVFile` object and muxed together.
-
->>> from pymkv import MKVFile
->>> file = MKVFile()
->>> file.add_track(track1)
->>> file.add_track(track2)
->>> file.add_track(track3)
->>> file.mux('path/to/output.mkv')
-"""
-
 import json
-import subprocess as sp
-from os.path import expanduser
-from os.path import isfile
+import logging
+from functools import total_ordering
+from os import PathLike
+from pathlib import Path
 
+from pymkv.errors import InvalidLanguageError
+from pymkv.errors import NoTracksError
+from pymkv.errors import UnsupportedContainerError
+from pymkv.models import MkvmergeIdentificationOutput
+from pymkv.models import Track
 from pymkv.utils import is_iso_639_2_language_code
-from pymkv.verifications import verify_supported
+from pymkv.utils import run_mkvmerge
+
+logger = logging.getLogger(__name__)
 
 
+@total_ordering
 class MKVTrack:
-    """A class that represents a track for an :class:`~pymkv.MKVFile` object.
+    def __init__(
+        self,
+        file_path: Path,
+        track_id: int,
+        track_codec: str,
+        track_type: str,
+        track_name: str | None = None,
+        language: str | None = None,
+        *,
+        default_track: bool = False,
+        forced_track: bool = False,
+    ):
+        # immutable once set
+        self._file_path = file_path.expanduser().resolve()
+        self._track_id = track_id
+        self._track_codec = track_codec
+        self._track_type = track_type
 
-    :class:`~pymkv.MKVTrack` objects are video, audio, or subtitles. Tracks can be standalone files or a single track
-    within an MKV file, both can be handled by pymkv. An :class:`~pymkv.MKVTrack` object can be added to an
-    :class:`~pymkv.MKVFile` and will be included when the MKV is muxed.
-
-    Parameters
-    ----------
-    file_path : str
-        Path to the track file. This can also be an MKV where the `track_id` is the track represented in the MKV.
-    track_id : int, optional
-        The id of the track to be used from the file. `track_id` only needs to be set when importing a track from
-        an MKV. In this case, you can specify `track_id` to indicate which track from the MKV should be used. If not
-        set, it will import the first track. Track 0 is imported by default because mkvmerge sees standalone
-        track files as having one track with track_id set as 0.
-    track_name : str, optional
-        The name that will be given to the track when muxed into a file.
-    language : str, optional
-        The language of the track. It must be an ISO639-2 language code.
-    default_track : bool, optional
-        Determines if the track should be the default track of its type when muxed into an MKV file.
-    forced_track : bool, optional
-        Determines if the track should be a forced track when muxed into an MKV file.
-
-    Attributes
-    ----------
-    mkvmerge_path : str
-        The path where pymkv looks for the mkvmerge executable. pymkv relies on the mkvmerge executable to parse
-        files. By default, it is assumed mkvmerge is in your shell's $PATH variable. If it is not, you need to set
-        *mkvmerge_path* to the executable location.
-    track_name : str
-        The name that will be given to the track when muxed into a file.
-    default_track : bool
-        Determines if the track should be the default track of its type when muxed into an MKV file.
-    forced_track : bool
-        Determines if the track should be a forced track when muxed into an MKV file.
-    no_chapters : bool
-        If chapters exist in the track file, don't include them when this :class:`~pymkv.MKVTrack` object is a track
-        in an :class:`~pymkv.MKVFile` mux operation. This option has no effect on standalone track files, only tracks
-        that are already part of an MKV file.
-    no_global_tags : bool
-        If global tags exist in the track file, don't include them when this :class:`~pymkv.MKVTrack` object is a track
-        in an :class:`~pymkv.MKVFile` mux operation. This option has no effect on standalone track files, only tracks
-        that are already part of an MKV file.
-    no_track_tags : bool
-        If track tags exist in the specified track within the track file, don't include them when this
-        :class:`~pymkv.MKVTrack` object is a track in an :class:`~pymkv.MKVFile` mux operation. This option has no
-        effect on standalone track files, only tracks that are already part of an MKV file.
-    no_attachments : bool
-        If attachments exist in the track file, don't include them when this :class:`~pymkv.MKVTrack` object is a track
-        in an :class:`~pymkv.MKVFile` mux operation. This option has no effect on standalone track files, only tracks
-        that are already part of an MKV file.
-    """
-
-    def __init__(self, file_path, track_id=0, track_name=None, language=None, default_track=False, forced_track=False):
-        # track info
-        self._track_codec = None
-        self._track_type = None
-
-        # base
-        self.mkvmerge_path = "mkvmerge"
-        self._file_path = None
-        self.file_path = file_path
-        self._track_id = None
-        self.track_id = track_id
-
-        # flags
-        self.track_name = track_name
-        self._language = None
+        # Can be changed
         self.language = language
-        self._tags = None
+        self.track_name = track_name
+        self.tags_file: Path | None = None
         self.default_track = default_track
         self.forced_track = forced_track
 
-        # exclusions
+        # output control options
         self.no_chapters = False
         self.no_global_tags = False
         self.no_track_tags = False
         self.no_attachments = False
 
-    def __repr__(self):
-        return repr(self.__dict__)
+    @staticmethod
+    def from_json(file_path: Path | PathLike | str, data: Track) -> "MKVTrack":
+        file_path = Path(file_path).expanduser().resolve()
+        return MKVTrack(
+            file_path,
+            track_id=data["id"],
+            track_codec=data["codec"],
+            track_type=data["type"],
+            track_name=data.get("properties", {}).get("track_name"),
+            language=data.get("properties", {}).get("language"),
+            default_track=data.get("properties", {}).get("default_track", False),
+            forced_track=data.get("properties", {}).get("forced_track", False),
+        )
 
-    @property
-    def file_path(self):
-        """str: The path to the track or MKV file containing the desired track.
+    @staticmethod
+    def from_file(file_path: Path | PathLike | str) -> "MKVTrack":
+        file_path = Path(file_path).expanduser().resolve()
+        info_json: MkvmergeIdentificationOutput = json.loads(
+            run_mkvmerge(["--identify", "--identification-format", "json", str(file_path)]),
+        )
 
-        Setting this property will verify the passed in file is supported by mkvmerge and set the track_id to 0. It
-        is recommended to recreate MKVTracks instead of setting their file path after instantiation.
+        if not info_json.get("container", {}).get("supported", False):
+            raise UnsupportedContainerError
 
-        Raises
-        ------
-        ValueError
-            Raised if `file_path` is not a supported file type.
-        """
-        return self._file_path
+        if "tracks" not in info_json or len(info_json["tracks"]) == 0:
+            raise NoTracksError
+        elif len(info_json["tracks"]) > 1:
+            logger.warning(f"Multiple tracks detected in {file_path}, selected the first")
 
-    @file_path.setter
-    def file_path(self, file_path):
-        file_path = expanduser(file_path)
-        if not verify_supported(file_path):
-            raise ValueError('"{}" is not a supported file')
-        self._file_path = file_path
-        self.track_id = 0
+        return MKVTrack.from_json(file_path, info_json["tracks"][0])
 
-    @property
-    def track_id(self):
-        """int: The ID of the track within the file.
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, MKVTrack):
+            raise NotImplementedError
+        return self._track_id == other._track_id
 
-        Setting *track_id* will check that the ID passed in exists in the file. It will then look at the new track
-        and set the codec and track type. Should be left at 0 unless extracting a specific track from an MKV.
+    def __lt__(self, other: "MKVTrack") -> bool:
+        return self._track_id < other._track_id
 
-        Raises
-        ------
-        IndexError
-            Raised if the passed in index is out of range of the file's tracks.
-        """
-        return self._track_id
-
-    @track_id.setter
-    def track_id(self, track_id):
-        info_json = json.loads(sp.check_output([self.mkvmerge_path, "-J", self.file_path]).decode())
-        if not 0 <= track_id < len(info_json["tracks"]):
-            raise IndexError("track index out of range")
-        self._track_id = track_id
-        self._track_codec = info_json["tracks"][track_id]["codec"]
-        self._track_type = info_json["tracks"][track_id]["type"]
+    def __hash__(self) -> int:
+        return hash((self._track_id,))
 
     @property
     def language(self):
@@ -192,31 +109,9 @@ class MKVTrack:
         if language is None or language.lower() == "und" or is_iso_639_2_language_code(language):
             self._language = language
         else:
-            raise ValueError("not an ISO639-2 language code")
-
-    @property
-    def tags(self):
-        """str: The tags file to include with the track.
-
-        Setting this property will check that the file path passed in exists and set it as the tags file.
-
-        Raises
-        ------
-        FileNotFoundError
-            Raised if the passed in file does not exist or is not a file.
-        TypeError
-            Raises if the passed in file is not of type str.
-        """
-        return self._tags
-
-    @tags.setter
-    def tags(self, file_path):
-        if not isinstance(file_path, str):
-            raise TypeError(f'"{file_path}" is not of type str')
-        file_path = expanduser(file_path)
-        if not isfile(file_path):
-            raise FileNotFoundError(f'"{file_path}" does not exist')
-        self._tags = file_path
+            msg = f"'{language}' is not a valid ISO639-2 language code"
+            logger.error(msg)
+            raise InvalidLanguageError(msg)
 
     @property
     def track_codec(self):
@@ -227,3 +122,79 @@ class MKVTrack:
     def track_type(self):
         """str: The type of track such as video or audio."""
         return self._track_type
+
+    def command(self) -> list[str]:
+        """
+        Generate mkvmerge command arguments for this track.
+
+        Builds a list of command-line arguments for mkvmerge based on the track's
+        configuration, including track metadata, type-specific options, and exclusions.
+
+        Returns:
+            list[str]: Complete list of mkvmerge command arguments for this track,
+                    ending with the file path.
+        """
+        command = []
+        self_id_str = str(self._track_id)
+
+        # Track-specific options with None checks
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.track_name
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.language
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.tags
+        track_options = [
+            (self.track_name, "--track-name", self.track_name),
+            (self.language, "--language", self.language),
+            (self.tags_file, "--tags", str(self.tags_file)),
+        ]
+
+        for condition, flag, value in track_options:
+            if condition is not None:
+                command.extend([flag, f"{self_id_str}:{value}"])
+
+        # Boolean flags - always set (no conditionals needed for extend calls)
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.default_track_flag
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.forced_display_flag
+        command.extend(
+            [
+                "--default-track-flag",
+                f"{self_id_str}:{'1' if self.default_track else '0'}",
+                "--forced-display-flag",
+                f"{self_id_str}:{'1' if self.forced_track else '0'}",
+            ],
+        )
+
+        # Track type handling with lookup table
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.no_video
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.video_tracks
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.no_audio
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.audio_tracks
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.no_subtitles
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.subtitle_tracks
+        track_type_config = {
+            "video": (["--video-tracks", self_id_str], ["--no-audio", "--no-subtitles"]),
+            "audio": (["--audio-tracks", self_id_str], ["--no-video", "--no-subtitles"]),
+            "subtitles": (["--subtitle-tracks", self_id_str], ["--no-video", "--no-audio"]),
+        }
+
+        if self.track_type in track_type_config:
+            include_flags, exclude_flags = track_type_config[self.track_type]
+            command.extend(include_flags)
+            command.extend(exclude_flags)
+
+        # Exclusion flags - batch process
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.no_chapters
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.no_global_tags
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.no_track_tags
+        # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.no_attachments
+        exclusions = [
+            (self.no_chapters, "--no-chapters"),
+            (self.no_global_tags, "--no-global-tags"),
+            (self.no_track_tags, "--no-track-tags"),
+            (self.no_attachments, "--no-attachments"),
+        ]
+
+        command.extend(flag for condition, flag in exclusions if condition)
+
+        # Add file path
+        command.append(str(self._file_path))
+        return command
