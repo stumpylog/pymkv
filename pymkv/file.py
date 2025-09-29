@@ -34,7 +34,7 @@ class MKVFile:
         self.tracks: list[MKVTrack] = []
         self.attachments: list[MKVAttachment] = []
         # split options
-        self._split_options = []
+        self._split_options: list[str] = []
 
     @staticmethod
     def from_file(file_path: Path | PathLike | str) -> "MKVFile":

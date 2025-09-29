@@ -149,13 +149,13 @@ class MKVAttachment:
         # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.attachment_description
         # https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.description.attachment_mime_type
         attachment_options = [
-            (self.name, "--attachment-name", self.name),
-            (self.description, "--attachment-description", self.description),
-            (self._content_type, "--attachment-mime-type", self._content_type),
+            ("--attachment-name", self.name),
+            ("--attachment-description", self.description),
+            ("--attachment-mime-type", self._content_type),
         ]
 
-        for condition, flag, value in attachment_options:
-            if condition is not None:
+        for flag, value in attachment_options:
+            if value is not None:
                 command.extend([flag, value])
 
         # Add attachment with appropriate method

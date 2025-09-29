@@ -84,6 +84,7 @@ config-path = "none"
 detached = true
 dependencies = [
   "mypy ~= 1.18",
+  "iso639-lang",
 ]
 
 [tool.hatch.envs.typing.scripts]
